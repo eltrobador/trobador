@@ -154,7 +154,8 @@ def get_holdings(holdings_url: str, library_name: str) -> list[dict]:
             "location": location,
             "signature": signature,
             "status": status,
-            "notes": notes
+            "notes": notes,
+            "available": status.lower() == "disponible"
         })
 
     return copies
