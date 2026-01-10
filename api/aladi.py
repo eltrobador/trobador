@@ -78,20 +78,75 @@ def find_library_code(query: str) -> tuple[str, str] | None:
     return None
 
 
-def search_author_at_library(author: str, library_name: str, library_code: str) -> list[dict]:
-    """Search for an author's works at a specific library."""
+def _search_catalog(query: str, library_code: str, search_type: str = "keyword") -> BeautifulSoup | None:
+    """Search the catalog and return parsed HTML. Returns None if no results.
 
-    # Build search URL
-    encoded_author = urllib.parse.quote(author)
-    search_url = f"{BASE_URL}/search~S1*cat/X?SEARCH=({encoded_author})&searchscope=171&SORT=AX&b={library_code}"
+    search_type can be:
+    - 'keyword': bare search (default)
+    - 'title': t:(query)
+    - 'author': a:(query)
+    """
+    encoded_query = urllib.parse.quote(query)
+
+    if search_type == "title":
+        search_param = f"t:({encoded_query})"
+    elif search_type == "author":
+        search_param = f"a:({encoded_query})"
+    else:
+        search_param = f"({encoded_query})"
+
+    search_url = f"{BASE_URL}/search~S1*cat/X?SEARCH={search_param}&searchscope=171&SORT=AX&b={library_code}"
 
     response = requests.get(search_url)
     soup = BeautifulSoup(response.text, "html.parser")
 
+    # Check if there are any results
+    links = soup.select('a[href*="frameset"]')
+    if links:
+        return soup
+    return None
+
+
+def search_author_at_library(author: str, library_name: str, library_code: str) -> list[dict]:
+    """Search for an author's works at a specific library with fallback variations."""
+
+    # Try multiple search strategies in order
+    soup = None
+
+    # 1. Try title search (user may have entered title/author that matches title)
+    soup = _search_catalog(author, library_code, search_type="title")
+
+    # 2. Try author field search
+    if not soup:
+        soup = _search_catalog(author, library_code, search_type="author")
+
+    # 3. Try keyword search (original method)
+    if not soup:
+        soup = _search_catalog(author, library_code, search_type="keyword")
+
+    # 4. Try inverted name order (e.g., "Laia Viñas" -> "Viñas Laia")
+    if not soup:
+        parts = author.strip().split()
+        if len(parts) >= 2:
+            inverted = f"{parts[-1]} {' '.join(parts[:-1])}"
+            soup = _search_catalog(inverted, library_code, search_type="author")
+
+    # 5. Try individual parts (last name first)
+    if not soup:
+        parts = author.strip().split()
+        for part in reversed(parts):
+            if len(part) > 2:  # Skip very short parts
+                soup = _search_catalog(part, library_code, search_type="keyword")
+                if soup:
+                    break
+
+    if not soup:
+        return []
+
     results = []
     seen_titles = set()
 
-    # Find book links - they contain 'frameset' in the href
+    # Try to find book links with titles (keyword search results)
     for link in soup.select('a[href*="frameset"]'):
         title = link.get_text(strip=True)
         href = link.get("href", "")
@@ -113,6 +168,85 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
                 "title": title,
                 "copies": copies
             })
+
+    # If no results from link extraction, try extracting from detail page (single book result)
+    if not results:
+        # Check if this is a single book detail page (title search returns one result)
+        # Only look at the first strong tag in the title field (Títol row)
+        title_cell = soup.select_one('td.bibInfoData strong')
+
+        if title_cell:
+            text = title_cell.get_text(strip=True)
+
+            if text and text not in seen_titles and len(text) >= 5:
+                # This is a book title in a detail page
+                # Check if there's a holdings table nearby
+                title_table = title_cell.find_parent('table')
+                if title_table:
+                    # Look for the holdings table (usually comes after in document order)
+                    holdings_table = None
+                    sibling = title_table.find_next('table')
+                    while sibling:
+                        table_text = sibling.get_text()
+                        if any(word in table_text.lower() for word in ['localització', 'signature', 'estat']):
+                            holdings_table = sibling
+                            break
+                        sibling = sibling.find_next('table')
+
+                    # Try to find the "Veure més exemplars" button to get all holdings
+                    more_copies_form = soup.select_one('form input[type="submit"][value*="exemplar"]')
+                    if more_copies_form:
+                        more_copies_form = more_copies_form.find_parent('form')
+                        if more_copies_form:
+                            action = more_copies_form.get('action', '')
+                            method = more_copies_form.get('method', 'get').lower()
+
+                            if action:
+                                holdings_url = BASE_URL + action
+                                try:
+                                    all_holdings_response = requests.post(holdings_url) if method == 'post' else requests.get(holdings_url)
+                                    all_holdings_soup = BeautifulSoup(all_holdings_response.text, 'html.parser')
+                                    # Find the main holdings table
+                                    for tbl in all_holdings_soup.select('table'):
+                                        if any(word in tbl.get_text().lower() for word in ['localització', 'signature', 'estat']):
+                                            holdings_table = tbl
+                                            break
+                                except:
+                                    pass  # Fallback to single holdings table
+
+                    # Extract holdings from table
+                    if holdings_table:
+                        copies = []
+                        for row in holdings_table.select('tr'):
+                            cells = row.select('td')
+                            if len(cells) < 3:
+                                continue
+
+                            location = cells[0].get_text(strip=True) if len(cells) > 0 else ""
+                            signature = cells[1].get_text(strip=True) if len(cells) > 1 else ""
+                            status = cells[2].get_text(strip=True) if len(cells) > 2 else ""
+                            notes = cells[3].get_text(strip=True) if len(cells) > 3 else ""
+
+                            # Check if this is the library we want
+                            match_name = library_name.split(".")[0].strip().lower()
+                            if match_name in location.lower():
+                                copies.append({
+                                    "location": location,
+                                    "signature": signature,
+                                    "status": status,
+                                    "notes": notes,
+                                    "available": status.lower() == "disponible"
+                                })
+
+                        if copies:
+                            # Extract clean title (remove author info)
+                            title = text.split('/')[0].strip() if '/' in text else text
+                            if title not in seen_titles and len(title) >= 5:
+                                results.append({
+                                    "title": title,
+                                    "copies": copies
+                                })
+                                seen_titles.add(title)
 
     return results
 
