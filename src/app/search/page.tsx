@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -27,7 +28,7 @@ interface SearchResult {
   error?: string;
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const author = searchParams.get("author");
   const library = searchParams.get("library");
@@ -147,5 +148,19 @@ export default function SearchPage() {
         ) : null}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+          <p className="text-lg text-zinc-500">Carregant...</p>
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
   );
 }
