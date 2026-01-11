@@ -146,7 +146,12 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
     results = []
     seen_titles = set()
 
+    # Build a list of cover images from portadesbd.diba.cat
+    # These appear in the same order as the book links
+    cover_images = [img.get("src", "") for img in soup.select('img[src*="portadesbd.diba.cat"]')]
+
     # Try to find book links with titles (keyword search results)
+    valid_link_index = 0
     for link in soup.select('a[href*="frameset"]'):
         title = link.get_text(strip=True)
         href = link.get("href", "")
@@ -159,15 +164,22 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
 
         seen_titles.add(title)
 
+        # Get cover URL by index (images and valid links should be in same order)
+        cover_url = cover_images[valid_link_index] if valid_link_index < len(cover_images) else None
+        valid_link_index += 1
+
         # Get holdings for this book
         holdings_url = BASE_URL + href.replace("/frameset", "/holdings")
         copies = get_holdings(holdings_url, library_name)
 
         if copies:  # Only include if there are copies at this library
-            results.append({
+            book_data = {
                 "title": title,
                 "copies": copies
-            })
+            }
+            if cover_url:
+                book_data["cover_url"] = cover_url
+            results.append(book_data)
 
     # If no results from link extraction, try extracting from detail page (single book result)
     if not results:
@@ -242,10 +254,17 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
                             # Extract clean title (remove author info)
                             title = text.split('/')[0].strip() if '/' in text else text
                             if title not in seen_titles and len(title) >= 5:
-                                results.append({
+                                # Try to get cover image from detail page
+                                cover_img = soup.select_one('img[src*="portadesbd.diba.cat"]')
+                                cover_url = cover_img.get("src", "") if cover_img else None
+
+                                book_data = {
                                     "title": title,
                                     "copies": copies
-                                })
+                                }
+                                if cover_url:
+                                    book_data["cover_url"] = cover_url
+                                results.append(book_data)
                                 seen_titles.add(title)
 
     return results
