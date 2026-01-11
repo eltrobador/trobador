@@ -115,6 +115,9 @@ function SearchContent() {
                     <CardTitle className="text-lg">{book.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    <p className="mb-2 text-sm font-medium text-zinc-500">
+                      Còpies:
+                    </p>
                     <ul className="flex flex-col gap-2">
                       {book.copies.map((copy, copyIndex) => (
                         <li
@@ -122,12 +125,16 @@ function SearchContent() {
                           className="flex items-center gap-2"
                         >
                           <span
-                            className={`inline-block h-3 w-3 rounded-full ${
+                            className={`inline-block h-3 w-3 shrink-0 rounded-full ${
                               copy.available
                                 ? "bg-green-500"
                                 : "bg-red-500"
                             }`}
                           />
+                          <span className="text-zinc-700 dark:text-zinc-300">
+                            {copy.location}
+                          </span>
+                          <span className="text-zinc-400">—</span>
                           <span
                             className={
                               copy.available
