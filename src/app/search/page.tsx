@@ -68,14 +68,14 @@ function SearchContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <p className="text-lg text-zinc-500">Cercant...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-4 dark:bg-zinc-950">
+    <div className="flex-1 bg-zinc-50 p-4 dark:bg-zinc-950">
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
           <Link href="/">
@@ -155,7 +155,7 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-zinc-950">
           <p className="text-lg text-zinc-500">Carregant...</p>
         </div>
       }
