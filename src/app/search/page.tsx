@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -16,6 +17,7 @@ interface Copy {
 interface Book {
   title: string;
   copies: Copy[];
+  cover_url?: string;
 }
 
 interface SearchResult {
@@ -111,38 +113,52 @@ function SearchContent() {
             <div className="flex flex-col gap-4">
               {result.books.map((book, index) => (
                 <Card key={index}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{book.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="mb-2 text-sm font-medium text-zinc-500">
-                      Còpies:
-                    </p>
-                    <ul className="flex flex-col gap-2">
-                      {book.copies.map((copy, copyIndex) => (
-                        <li
-                          key={copyIndex}
-                          className="flex items-center gap-2"
-                        >
-                          <span
-                            className={`inline-block h-3 w-3 shrink-0 rounded-full ${
-                              copy.available
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          />
-                          <span
-                            className={
-                              copy.available
-                                ? "text-green-700 dark:text-green-400"
-                                : "text-red-700 dark:text-red-400"
-                            }
+                  <CardContent className="flex gap-4 p-4">
+                    {book.cover_url && (
+                      <div className="shrink-0">
+                        <Image
+                          src={book.cover_url}
+                          alt={`Portada de ${book.title}`}
+                          width={80}
+                          height={120}
+                          className="rounded object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h3 className="mb-3 text-lg font-semibold">
+                        {book.title}
+                      </h3>
+                      <p className="mb-2 text-sm font-medium text-zinc-500">
+                        Còpies:
+                      </p>
+                      <ul className="flex flex-col gap-2">
+                        {book.copies.map((copy, copyIndex) => (
+                          <li
+                            key={copyIndex}
+                            className="flex items-center gap-2"
                           >
-                            {copy.status}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                            <span
+                              className={`inline-block h-3 w-3 shrink-0 rounded-full ${
+                                copy.available
+                                  ? "bg-green-500"
+                                  : "bg-red-500"
+                              }`}
+                            />
+                            <span
+                              className={
+                                copy.available
+                                  ? "text-green-700 dark:text-green-400"
+                                  : "text-red-700 dark:text-red-400"
+                              }
+                            >
+                              {copy.status}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
