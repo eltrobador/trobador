@@ -1,19 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const PREFERRED_LIBRARY_KEY = "preferredLibrary";
 
 export default function Home() {
   const router = useRouter();
   const [author, setAuthor] = useState("");
   const [library, setLibrary] = useState("");
+  const [saveAsPreferred, setSaveAsPreferred] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(PREFERRED_LIBRARY_KEY);
+    if (saved) {
+      setLibrary(saved);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (author && library) {
+      if (saveAsPreferred) {
+        localStorage.setItem(PREFERRED_LIBRARY_KEY, library);
+      }
       router.push(`/search?author=${encodeURIComponent(author)}&library=${encodeURIComponent(library)}`);
     }
   };
@@ -54,6 +68,16 @@ export default function Home() {
                 onChange={(e) => setLibrary(e.target.value)}
                 required
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="saveAsPreferred"
+                checked={saveAsPreferred}
+                onChange={(e) => setSaveAsPreferred(e.target.checked)}
+              />
+              <label htmlFor="saveAsPreferred" className="text-sm">
+                Desa com a biblioteca preferida
+              </label>
             </div>
             <Button type="submit" className="mt-2">
               Cercar
