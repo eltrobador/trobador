@@ -19,6 +19,7 @@ export default function Home() {
     const saved = localStorage.getItem(PREFERRED_LIBRARY_KEY);
     if (saved) {
       setLibrary(saved);
+      setSaveAsPreferred(true);
     }
   }, []);
 
