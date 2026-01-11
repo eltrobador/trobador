@@ -131,10 +131,6 @@ function SearchContent() {
                                 : "bg-red-500"
                             }`}
                           />
-                          <span className="text-zinc-700 dark:text-zinc-300">
-                            {copy.location}
-                          </span>
-                          <span className="text-zinc-400">—</span>
                           <span
                             className={
                               copy.available
