@@ -59,7 +59,3 @@ This project is not affiliated with or endorsed by the Diputació de Barcelona (
 **URL:** https://aladi.diba.cat
 
 The bibliographic information provided through this tool is publicly available data from the municipal library network (Xarxa de Biblioteques Municipals - XBM). This project makes no claims of ownership over the data and provides it for informational purposes only.
-
-## License
-
-MIT (code only - does not apply to bibliographic data from DIBA)
