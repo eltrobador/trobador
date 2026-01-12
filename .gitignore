@@ -1,5 +1,6 @@
 __pycache__
 .next
 .vercel
+next-env.d.ts
 node_modules
 venv
