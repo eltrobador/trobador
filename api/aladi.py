@@ -107,6 +107,37 @@ def _search_catalog(query: str, library_code: str, search_type: str = "keyword")
     return None
 
 
+def _get_library_match_key(library_name: str) -> str:
+    """Extract the key string used for matching a library in holdings.
+
+    For Barcelona libraries: uses distinctive branch name (e.g., "centelles")
+    For other cities: uses the city name (e.g., "moià")
+    """
+    parts = library_name.split('.', 1)
+    city = parts[0].strip().lower()
+
+    # Barcelona libraries use abbreviated format in holdings (e.g., "BCN EIX.")
+    # so we need to match on the branch name instead
+    if city == "barcelona" and len(parts) > 1:
+        branch = parts[1].strip()
+        # Extract the most distinctive part (usually after the dash, e.g., "Agustí Centelles")
+        branch_parts = re.split(r'[–—-]', branch)
+        if len(branch_parts) > 1:
+            # Use the last part (person's name is most distinctive)
+            distinctive = branch_parts[-1].strip().lower()
+            # Get the last word (surname is most unique)
+            words = distinctive.split()
+            if words:
+                return words[-1]
+        # Fallback to first significant word from branch
+        words = branch.lower().split()
+        for word in words:
+            if len(word) > 3 and word not in ("de", "del", "la", "les", "l'"):
+                return word
+
+    return city
+
+
 def search_author_at_library(author: str, library_name: str, library_code: str) -> list[dict]:
     """Search for an author's works at a specific library."""
 
@@ -213,9 +244,7 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
                             notes = cells[3].get_text(strip=True) if len(cells) > 3 else ""
 
                             # Check if this is the library we want
-                            # Use the city name (before the dot) for matching
-                            parts = library_name.split('.', 1)
-                            key_name = parts[0].strip().lower()
+                            key_name = _get_library_match_key(library_name)
                             if key_name in location.lower():
                                 copies.append({
                                     "location": location,
@@ -259,12 +288,7 @@ def get_holdings(holdings_url: str, library_name: str) -> list[dict]:
 
     copies = []
 
-    # Extract the city name for matching
-    # Library name format: "City. Branch Name" (e.g., "Moià. Municipal 1 d'octubre")
-    # Holdings format: "CITY.Branch Name" (e.g., "MOIÀ.Biblioteca 1 d'octubre")
-    # We use the city name (before the dot) for matching
-    parts = library_name.split('.', 1)
-    key_name = parts[0].strip().lower()
+    key_name = _get_library_match_key(library_name)
 
     # Find all rows in the holdings table
     for row in soup.select("tr"):
