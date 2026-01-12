@@ -108,37 +108,10 @@ def _search_catalog(query: str, library_code: str, search_type: str = "keyword")
 
 
 def search_author_at_library(author: str, library_name: str, library_code: str) -> list[dict]:
-    """Search for an author's works at a specific library with fallback variations."""
+    """Search for an author's works at a specific library."""
 
-    # Try multiple search strategies in order
-    soup = None
-
-    # 1. Try title search (user may have entered title/author that matches title)
-    soup = _search_catalog(author, library_code, search_type="title")
-
-    # 2. Try author field search
-    if not soup:
-        soup = _search_catalog(author, library_code, search_type="author")
-
-    # 3. Try keyword search (original method)
-    if not soup:
-        soup = _search_catalog(author, library_code, search_type="keyword")
-
-    # 4. Try inverted name order (e.g., "Laia Viñas" -> "Viñas Laia")
-    if not soup:
-        parts = author.strip().split()
-        if len(parts) >= 2:
-            inverted = f"{parts[-1]} {' '.join(parts[:-1])}"
-            soup = _search_catalog(inverted, library_code, search_type="author")
-
-    # 5. Try individual parts (last name first)
-    if not soup:
-        parts = author.strip().split()
-        for part in reversed(parts):
-            if len(part) > 2:  # Skip very short parts
-                soup = _search_catalog(part, library_code, search_type="keyword")
-                if soup:
-                    break
+    # Search by author only
+    soup = _search_catalog(author, library_code, search_type="author")
 
     if not soup:
         return []
@@ -240,11 +213,9 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
                             notes = cells[3].get_text(strip=True) if len(cells) > 3 else ""
 
                             # Check if this is the library we want
-                            # Use the same matching logic as get_holdings
+                            # Use the city name (before the dot) for matching
                             parts = library_name.split('.', 1)
-                            branch = parts[1].strip() if len(parts) > 1 else library_name
-                            branch_parts = re.split(r'[–—-]', branch)
-                            key_name = branch_parts[0].strip().lower()
+                            key_name = parts[0].strip().lower()
                             if key_name in location.lower():
                                 copies.append({
                                     "location": location,
@@ -288,15 +259,12 @@ def get_holdings(holdings_url: str, library_name: str) -> list[dict]:
 
     copies = []
 
-    # Extract the key branch name for matching
-    # Library name format: "City. Branch Name–Honorific Name"
-    # Holdings format: "ABBREV.Branch Name" or similar
-    # We extract the branch name part (before any dash with honorific)
+    # Extract the city name for matching
+    # Library name format: "City. Branch Name" (e.g., "Moià. Municipal 1 d'octubre")
+    # Holdings format: "CITY.Branch Name" (e.g., "MOIÀ.Biblioteca 1 d'octubre")
+    # We use the city name (before the dot) for matching
     parts = library_name.split('.', 1)
-    branch = parts[1].strip() if len(parts) > 1 else library_name
-    # Take part before any dash (e.g., "Fort Pienc–Ana María Moix" -> "Fort Pienc")
-    branch_parts = re.split(r'[–—-]', branch)
-    key_name = branch_parts[0].strip().lower()
+    key_name = parts[0].strip().lower()
 
     # Find all rows in the holdings table
     for row in soup.select("tr"):
