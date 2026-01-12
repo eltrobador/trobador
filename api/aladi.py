@@ -240,8 +240,12 @@ def search_author_at_library(author: str, library_name: str, library_code: str) 
                             notes = cells[3].get_text(strip=True) if len(cells) > 3 else ""
 
                             # Check if this is the library we want
-                            match_name = library_name.split(".")[0].strip().lower()
-                            if match_name in location.lower():
+                            # Use the same matching logic as get_holdings
+                            parts = library_name.split('.', 1)
+                            branch = parts[1].strip() if len(parts) > 1 else library_name
+                            branch_parts = re.split(r'[–—-]', branch)
+                            key_name = branch_parts[0].strip().lower()
+                            if key_name in location.lower():
                                 copies.append({
                                     "location": location,
                                     "signature": signature,
@@ -284,8 +288,15 @@ def get_holdings(holdings_url: str, library_name: str) -> list[dict]:
 
     copies = []
 
-    # Extract the key part of the library name for matching (e.g., "Moià" from "Moià. Municipal 1 d'octubre")
-    match_name = library_name.split(".")[0].strip().lower()
+    # Extract the key branch name for matching
+    # Library name format: "City. Branch Name–Honorific Name"
+    # Holdings format: "ABBREV.Branch Name" or similar
+    # We extract the branch name part (before any dash with honorific)
+    parts = library_name.split('.', 1)
+    branch = parts[1].strip() if len(parts) > 1 else library_name
+    # Take part before any dash (e.g., "Fort Pienc–Ana María Moix" -> "Fort Pienc")
+    branch_parts = re.split(r'[–—-]', branch)
+    key_name = branch_parts[0].strip().lower()
 
     # Find all rows in the holdings table
     for row in soup.select("tr"):
@@ -294,9 +305,10 @@ def get_holdings(holdings_url: str, library_name: str) -> list[dict]:
             continue
 
         location = cells[0].get_text(strip=True)
+        location_lower = location.lower()
 
-        # Check if this is the library we want (case-insensitive partial match)
-        if match_name not in location.lower():
+        # Check if this is the library we want
+        if key_name not in location_lower:
             continue
 
         signature = cells[1].get_text(strip=True) if len(cells) > 1 else ""
