@@ -1,39 +1,39 @@
 # Trobador
 
-Search the Aladí catalog - the library network of Diputació de Barcelona (XBM - Xarxa de Biblioteques Municipals).
+Cerca al catàleg Aladí - la xarxa de biblioteques de la Diputació de Barcelona (XBM - Xarxa de Biblioteques Municipals).
 
-## Features
+## Característiques
 
-- Search for books by author at any library in the network
-- Dynamic library lookup (245+ libraries)
-- Real-time availability status
+- Cercar llibres per autor a qualsevol biblioteca de la xarxa
+- Cerca dinàmica de biblioteques (245+ biblioteques)
+- Estat de disponibilitat en temps real
 
-## Installation
+## Instal·lació
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## Ús
 
 ```bash
-python aladi_search.py "<author>" "<library>"
+python aladi_search.py "<autor>" "<biblioteca>"
 ```
 
-### Examples
+### Exemples
 
 ```bash
-# Search by partial library name
+# Cercar per nom parcial de biblioteca
 python aladi_search.py "Irene Solà" "moià"
 
-# Search with full library name
+# Cercar amb nom complet de biblioteca
 python aladi_search.py "Irene Solà" "1 d'Octubre Moià"
 
-# Another library
+# Una altra biblioteca
 python aladi_search.py "Maria Mercè Marçal" "Vic"
 ```
 
-## Output
+## Sortida
 
 ```
 Searching for 'Irene Solà' at Moià. Municipal 1 d'octubre (gmo1)...
@@ -47,15 +47,15 @@ Searching for 'Irene Solà' at Moià. Municipal 1 d'octubre (gmo1)...
    ✓ Disponible
 ```
 
-## Data Source
+## Font de dades
 
-This tool queries the public [Aladí catalog](https://aladi.diba.cat/) of the Diputació de Barcelona library network.
+Aquesta eina consulta el catàleg públic [Aladí](https://aladi.diba.cat/) de la xarxa de biblioteques de la Diputació de Barcelona.
 
-### Attribution and Disclaimer
+### Atribució i Avís Legal
 
-This project is not affiliated with or endorsed by the Diputació de Barcelona (DIBA). All bibliographic data is sourced from the public Aladí catalog and remains the property of the Diputació de Barcelona.
+Aquest projecte no està afiliat ni és endossat per la Diputació de Barcelona (DIBA). Totes les dades bibliogràfiques provenen del catàleg públic d'Aladí i són propietat de la Diputació de Barcelona.
 
-**Data source:** Catàleg Aladí - Diputació de Barcelona
+**Font de dades:** Catàleg Aladí - Diputació de Barcelona
 **URL:** https://aladi.diba.cat
 
-The bibliographic information provided through this tool is publicly available data from the municipal library network (Xarxa de Biblioteques Municipals - XBM). This project makes no claims of ownership over the data and provides it for informational purposes only.
+La informació bibliogràfica proporcionada mitjançant aquesta eina és dada pública de la xarxa de biblioteques municipals (Xarxa de Biblioteques Municipals - XBM). Aquest projecte no fa reclamacions sobre la propietat de les dades i les proporciona només amb fins informatius.
