@@ -1,0 +1,15 @@
+services:
+  reverse-proxy:
+    restart: always
+
+  ui:
+    build:
+      target: runner
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  api:
+    build:
+      target: runner
+    restart: always

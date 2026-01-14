@@ -1,6 +1,18 @@
+# Python
 __pycache__
-.next
-.vercel
-next-env.d.ts
-node_modules
 venv
+
+# Node.js
+node_modules
+
+# Next.js
+.next
+next-env.d.ts
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Logs
+*.log

@@ -18,3 +18,16 @@ uv pip install -r requirements.txt
 ```bash
 python api/aladi.py "Irene Solà" "1 d'Octubre Moià"
 ```
+
+## AWS Setup
+
+### AWS Credentials
+The project uses AWS Network MCP server with the profile `diffffff-production` and region `eu-west-1`.
+
+To get temporary credentials, run:
+
+```bash
+aws --profile diffffff-production sso login
+```
+
+This will authenticate your session with AWS SSO and provide temporary credentials for the `diffffff-production` profile.
